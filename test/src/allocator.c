@@ -1,30 +1,51 @@
 #include "allocator.h"
+#include "fixed_buffer_allocator.h"
 #include "malloc_allocator.h"
+#include "slice.h"
+
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 
-typedef struct {
-    int *ptr;
-    size_t len;
-} IntSlice_t;
+void raw_test(void) {
+    allocator_t a = malloc_allocator;
+    int **foo = allocator.allocBytes(a, sizeof(int[5]));
 
-void raw() {
-    IntSlice_t int_buf = BYTES_AS_SLICE(
-            int, Allocator.rawAlloc(malloc_allocator, sizeof(int[5])));
+    assert(len(foo) == sizeof(int[5]));
 
-    assert(int_buf.len == 5);
-
-    for (size_t i = 0; i < int_buf.len; i++) {
-        int_buf.ptr[i] = i * 2;
+    for (size_t i = 0; i < len(foo) / sizeof(int); i++) {
+        (*foo)[i] = i * 2;
     }
 
-    for (size_t i = 0; i < int_buf.len; i++) {
-        assert(int_buf.ptr[i] == (int)i * 2);
+    for (size_t i = 0; i < len(foo) / sizeof(int); i++) {
+        assert((*foo)[i] == (int)i * 2);
     }
 
-    Allocator.rawFree(malloc_allocator, SLICE_AS_BYTES(int_buf));
+    allocator.free(a, foo);
 }
 
-int main() {
-    raw();
+void alloc_test(void) {
+    allocator_t a = malloc_allocator;
+    int **foo = allocator.alloc(a, sizeof(int), 5);
+
+    assert(len(foo) == 5);
+
+    for (size_t i = 0; i < len(foo); i++) {
+        (*foo)[i] = i * 2;
+    }
+
+    for (size_t i = 0; i < len(foo); i++) {
+        assert((*foo)[i] == (int)i * 2);
+    }
+
+    allocator.free(a, foo);
+}
+
+int main(void) {
+    raw_test();
+    alloc_test();
+
+    int **arr = ARRAY(int, 6, 2, 1);
+    assert(len(arr) == 3);
 }

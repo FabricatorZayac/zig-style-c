@@ -3,34 +3,22 @@
 
 #include <stddef.h>
 
-// result of sizeof, cheap generic
-typedef size_t typesize;
+enum AllocatorError {OutOfMemory};
 
 typedef struct {
-    char *ptr;
-    size_t len;
-} Bytes_t;
-
-#define BYTES_AS_SLICE(T, BYTES) \
-{ .ptr = (T *)BYTES.ptr, .len = BYTES.len / sizeof(T) }
-#define SLICE_AS_BYTES(SLICE) \
-(Bytes_t){ .ptr = (char *)SLICE.ptr, .len = SLICE.len * sizeof(*SLICE.ptr) }
-
-enum AllocatorError {OutOfMemory = -1};
-
-typedef struct Allocator {
     void *ptr;
-    const struct AllocatorVTable {
-        Bytes_t (*alloc)(void *self, size_t len);
-        void (*free)(void *self, Bytes_t buf);
+    const struct allocator_vtable {
+        void *(*alloc)(void *self, size_t len);
+        void (*free)(void *self, void *buf);
     } *vtable;
-} Allocator_t;
+} allocator_t;
 
-// I don't really want to call them classes, because it's a dirty word
-// and it's not really what this is, it's more of a method table
-const extern struct AllocatorClass {
-    Bytes_t (*rawAlloc)(Allocator_t self, size_t len);
-    void (*rawFree)(Allocator_t self, Bytes_t buf);
-} Allocator;
+const extern struct allocator_mt {
+    void *(*allocBytes)(allocator_t, size_t len);
+
+    void *(*create)(allocator_t, size_t size);
+    void *(*alloc)(allocator_t, size_t size, size_t n);
+    void (*free)(allocator_t, void *data);
+} allocator;
 
 #endif // !ALLOCATOR_H_

@@ -30,7 +30,7 @@ TESTOBJS     := $(patsubst $(TESTSRC)/%.c, $(TESTOBJ)/%.o, $(TESTSRCS))
 TESTS        := $(patsubst $(TESTOBJ)/%.o, $(TESTBIN)/%, $(TESTOBJS))
 
 LDFLAGS      :=
-CFLAGS       := -I$(INCLUDE) -std=$(CC_STANDARD) -Wall -Wextra
+CFLAGS       := -I$(INCLUDE) -std=$(CC_STANDARD) -Wall -Wextra -pedantic
 DEBUGFLAGS   := -O0 -ggdb
 
 define execute
@@ -53,7 +53,7 @@ test: $(LIB) $(TESTS)
 	$(foreach x, $(TESTS), $(call execute, ./$(x)))
 
 debug: CFLAGS := $(CFLAGS) $(DEBUGFLAGS)
-debug: $(TESTS)
+debug: $(LIB) $(TESTS)
 
 $(TESTBIN)/%: $(TESTOBJ)/%.o | $(TESTBIN)
 	$(CC) $(CFLAGS) $< $(LIB) -o $@ $(LDFLAGS)
