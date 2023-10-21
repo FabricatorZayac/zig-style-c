@@ -1,50 +1,51 @@
 #include "vec.h"
 #include "allocator.h"
-#include "class.h"
+#include "slice.h"
 #include <stdint.h>
 #include <string.h>
 
-typedef Vec_t Self;
-typedef struct VecClass Class;
+static void *init(size_t typesize, allocator_t allocator) {
+    Vec_t *self = Allocator.create(allocator, sizeof(Vec_t));
+    self->items = (slice_t){ .ptr = NULL, .len = 0, .elem_size = typesize };
+    self->capacity = 0;
+    self->allocator = allocator;
+    return self;
+}
 
-// Vec_t Vec_init(Class_t T, Allocator_t allocator) {
-//     return (Self){
-//         .T = T,
-//         .allocator = allocator,
-//         .data = { .ptr = NULL, .len = 0 }
-//     };
-// }
-//
-// void Vec_deinit(Self *self) {
-//     Allocator.rawFree(self->allocator, self->data);
-// }
-//
-// size_t Vec_len(Self *self) { return self->data.len * self->T.size; }
-//
-// void Vec_ensureTotalCapacity(Self *self, size_t new_capacity) {
-//     if (self->T.size == 0) {
-//         self->capacity = SIZE_MAX;
-//         return;
-//     }
-//     if (self->capacity >= new_capacity) return;
-//
-//     Bytes_t old_memory = self->data;
-//     Bytes_t new_memory = Allocator.rawAlloc(self->allocator, new_capacity * self->T.size);
-//     memcpy(new_memory.ptr, old_memory.ptr, old_memory.len);
-//     Allocator.rawFree(self->allocator, old_memory);
-//     self->data.ptr = new_memory.ptr;
-// }
-//
-// void *Vec_at(Self *self, size_t idx) {
-//     if (self->data.len / self->T.size < idx) {
-//         return NULL;
-//     }
-//     return &self->data.ptr[idx * self->T.size];
-// }
-//
-// Class Vec = {
-//     .init = Vec_init,
-//     .deinit = Vec_deinit,
-//     .len = Vec_len,
-//     .at = Vec_at,
-// };
+static void deinit(void *_self) {
+    Vec_t *self = _self;
+    Allocator.free(self->allocator, self->items.ptr);
+    Allocator.destroy(self->allocator, self);
+}
+
+static void ensureTotalCapacity(void *_self, size_t new_capacity) {
+    Vec_t *self = _self;
+
+    if (self->capacity >= new_capacity) return;
+
+    size_t better_capacity = self->capacity;
+    while (1) {
+        better_capacity += better_capacity / 2 + 8;
+        if (better_capacity >= new_capacity) break;
+    }
+
+    slice_t *new_memory = Allocator.alloc(
+        self->allocator,
+        self->items.elem_size,
+        better_capacity
+    );
+
+    new_memory->elem_size = self->items.elem_size;
+    new_memory->len = new_memory->len / self->items.elem_size;
+    slicecpy(SLICE((char **)new_memory, 0, self->items.len), &self->items);
+
+    Allocator.free(self->allocator, self->items.ptr);
+    self->items.ptr = new_memory;
+    self->capacity = len(new_memory);
+}
+
+const struct Vec_mt Vec = {
+    .init = init,
+    .deinit = deinit,
+    .ensureTotalCapacity = ensureTotalCapacity,
+};
