@@ -4,8 +4,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "cursed_macros.h"
-
 typedef struct {
     void *ptr;
     size_t len;
@@ -15,11 +13,11 @@ typedef struct {
 // generic alias
 #define slice(T) T **
 
-#define ARRAY(T, ...)             \
-(void *)&(slice_t) {              \
-    .ptr = &(T[]){__VA_ARGS__},   \
-    .len = NUM_ARGS(__VA_ARGS__), \
-    .elem_size = sizeof(T),       \
+#define ARRAY(T, ...)                                \
+(void *)&(slice_t) {                                 \
+    .ptr = &(T[]){__VA_ARGS__},                      \
+    .len = sizeof((T[]){ __VA_ARGS__ }) / sizeof(T), \
+    .elem_size = sizeof(T),                          \
 }
 
 static inline size_t len(void *slice) {
