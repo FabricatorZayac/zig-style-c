@@ -1,5 +1,5 @@
 #include "allocator.h"
-#include "malloc_allocator.h"
+#include "heap.h"
 #include "slice.h"
 
 #include <stdio.h>

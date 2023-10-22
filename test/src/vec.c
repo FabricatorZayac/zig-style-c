@@ -1,5 +1,6 @@
 #include "vec.h"
-#include "malloc_allocator.h"
+#include "heap.h"
+
 #include <stdio.h>
 #include <assert.h>
 

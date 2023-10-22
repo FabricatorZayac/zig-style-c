@@ -1,6 +1,8 @@
-#include "malloc_allocator.h"
+#include "heap.h"
+
 #include "allocator.h"
 #include "slice.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
